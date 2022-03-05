@@ -1,0 +1,75 @@
+---
+title: "K-Nearest Neighbor (KNN) Classification on Titanic Dataset"
+output:
+  html_document:
+    df_print: paged
+---
+
+### Load Packages
+```{r echo=TRUE,results='hide'}
+library(MASS)
+library(MLmetrics)
+library(caret)
+```
+
+Pada kasus klasifikasi ini, akan digunakan data `Titanic` dengan rincian variabel sebagai berikut.
+
+[![Titanic-Data.png](https://i.postimg.cc/4NmYKDWJ/Titanic-Data.png)](https://postimg.cc/PPnX9RGc)
+
+Sumber: https://www.kaggle.com/c/titanic/data
+
+### Load Data
+```{r}
+library(readr)
+titanic_data <- read_csv("train.csv")
+head(titanic_data)
+```
+
+### Variables Selection
+Sebelum membentuk model *machine learning*, dilakukan pemilihan variabel.
+```{r}
+titanic_selected <- titanic_data[,c(2,3,5,6,7,8,12)]
+titanic_selected$Survived = as.factor(titanic_selected$Survived)
+
+head(titanic_selected)
+```
+
+### Remove Rows with Missing Values
+Baris yang memuat *missing data* di *remove*.
+```{r}
+titanic_selected <- na.omit(titanic_selected)
+titanic_selected
+```
+
+### Data Partition
+Data dibagi menjadi 90% data *training* dan 10% data *testing*.
+```{r}
+indexes <- createDataPartition(titanic_selected$Survived,p = .9,list = F)
+train <- titanic_selected[indexes,]
+test <-titanic_selected[-indexes,]
+
+train_x <- train[,-1]
+train_y <- train[,1]
+
+test_x <- test[,-1]
+test_y <- test[,1]
+
+
+```
+
+### KNN Classification
+Pembentukan model klasifikasi KNN dengan k = 5.
+```{r}
+knnmodel <- knn3(Survived ~.,train,k=5)
+
+probs_pred <- predict(knnmodel,test)[,2]
+y_pred <- replace(probs_pred,probs_pred>0.5,1)
+y_pred <- replace(y_pred,y_pred<=0.5,0)
+y_pred <- as.factor(y_pred)
+
+```
+
+### Model Evaluation
+```{r}
+confusionMatrix(test$Survived,y_pred)
+```
